@@ -50,10 +50,21 @@
         <div id="preview-area" class="preview-area">
             <h3>✅ Seu Panfleto:</h3>
             <canvas id="canvas" width="1080" height="1080"></canvas>
-            <button onclick="baixarImagem(event)" class="btn-download">
+            <button onclick="baixarImagemWrapper(event)" class="btn-download">
                 📤 COMPARTILHAR
             </button>
             <p class="dica">Clique para compartilhar direto no WhatsApp!</p>
+        </div>
+        
+        <!-- Botão debug discreto fora do card -->
+        <p onclick="toggleDebug()" style="text-align: center; margin-top: 15px; color: rgba(255,255,255,0.4); font-size: 11px; cursor: pointer; user-select: none;">
+            MODO DESENVOLVEDOR
+        </p>
+        
+        <!-- Área de debug (oculta por padrão) -->
+        <div id="debug-area" style="display: none; margin-top: 15px; padding: 15px; background: white; border-radius: 15px; text-align: left; font-size: 12px; font-family: monospace; max-height: 300px; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.15);">
+            <strong style="display: block; margin-bottom: 10px; color: #333;">📋 Log de Debug:</strong>
+            <div id="debug-log"></div>
         </div>
     </div>
     

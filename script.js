@@ -1,3 +1,58 @@
+// Função auxiliar para mostrar logs na página
+function debugLog(mensagem) {
+    console.log(mensagem);
+    
+    try {
+        const debugArea = document.getElementById('debug-area');
+        const debugLogDiv = document.getElementById('debug-log');
+        
+        if (!debugArea || !debugLogDiv) {
+            console.error('Elementos de debug não encontrados!');
+            return;
+        }
+        
+        // Mostrar automaticamente quando houver logs
+        debugArea.style.display = 'block';
+        const timestamp = new Date().toLocaleTimeString();
+        const newLog = `<div style="margin-bottom: 5px; color: #333;">[${timestamp}] ${mensagem}</div>`;
+        debugLogDiv.innerHTML += newLog;
+        debugLogDiv.scrollTop = debugLogDiv.scrollHeight;
+        
+        console.log('Log adicionado com sucesso:', mensagem);
+    } catch (error) {
+        console.error('Erro no debugLog:', error);
+    }
+}
+
+// Teste inicial ao carregar a página (sem log automático)
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🟢 Página carregada - Sistema de debug ativo');
+});
+
+// Função para mostrar/ocultar debug
+function toggleDebug() {
+    const debugArea = document.getElementById('debug-area');
+    if (debugArea.style.display === 'none') {
+        debugArea.style.display = 'block';
+    } else {
+        debugArea.style.display = 'none';
+    }
+}
+
+// Wrapper para chamar a função com log
+function baixarImagemWrapper(event) {
+    debugLog('🔴 BOTÃO CLICADO!');
+    debugLog('🔵 Wrapper: Prestes a chamar baixarImagem');
+    
+    try {
+        baixarImagem(event);
+        debugLog('🔵 Wrapper: baixarImagem retornou');
+    } catch (e) {
+        debugLog('❌ Wrapper: ERRO ao chamar baixarImagem: ' + e.message);
+        alert('ERRO: ' + e.message);
+    }
+}
+
 function gerarPanfleto() {
     // Pegar valores dos inputs
     const palestrante = document.getElementById('palestrante').value.trim();
@@ -165,29 +220,84 @@ function gerarPanfleto() {
 }
 
 function baixarImagem(event) {
-    const canvas = document.getElementById('canvas');
-    const palestrante = document.getElementById('palestrante').value.trim();
-    const btn = event.target;
+    debugLog('🟢 ENTROU na função baixarImagem');
     
-    // Feedback imediato
-    const textoOriginal = btn.textContent;
-    btn.textContent = '⏳ PREPARANDO...';
-    btn.disabled = true;
+    try {
+        debugLog('🔵 Dentro do try');
+        debugLog('🔵 === FUNÇÃO BAIXAR IMAGEM CHAMADA ===');
+        
+        const canvas = document.getElementById('canvas');
+        const palestrante = document.getElementById('palestrante').value.trim();
+        const btn = event ? event.target : null;
+        
+        debugLog(`🔵 Canvas: ${canvas ? 'OK' : 'NÃO ENCONTRADO'}`);
+        debugLog(`🔵 Palestrante: ${palestrante || 'VAZIO'}`);
+        debugLog(`🔵 Botão: ${btn ? 'OK' : 'NÃO ENCONTRADO'}`);
+        debugLog(`🔵 Event: ${event ? 'OK' : 'NULL'}`);
+        
+        if (!canvas) {
+            debugLog('❌ ERRO CRÍTICO: Canvas não encontrado!');
+            return;
+        }
+        
+        if (!btn) {
+            debugLog('❌ ERRO: Botão não encontrado no event.target');
+            return;
+        }
+        
+        debugLog(`Navegador: ${navigator.userAgent}`);
+        
+        // Feedback imediato
+        const textoOriginal = btn.textContent;
+        btn.textContent = '⏳ PREPARANDO...';
+        btn.disabled = true;
+        
+        debugLog('🔵 Convertendo canvas para blob...');
     
     // Converter canvas para blob
     canvas.toBlob(async (blob) => {
+        if (!blob) {
+            debugLog('❌ ERRO: Falha ao criar blob');
+            btn.textContent = '❌ ERRO';
+            setTimeout(() => {
+                btn.textContent = textoOriginal;
+                btn.disabled = false;
+            }, 2000);
+            return;
+        }
+        
+        debugLog(`✅ Blob criado: ${blob.size} bytes`);
+        
         const arquivo = new File([blob], `panfleto-${palestrante.replace(/\s+/g, '-')}.png`, { 
             type: 'image/png' 
         });
         
+        debugLog(`✅ File criado: ${arquivo.name} (${arquivo.size} bytes)`);
+        debugLog(`🔵 navigator.share existe? ${!!navigator.share}`);
+        debugLog(`🔵 navigator.canShare existe? ${!!navigator.canShare}`);
+        
         // Verificar se o navegador suporta compartilhamento
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        if (navigator.share) {
+            // Verificar se pode compartilhar arquivos
+            const podeCompartilharArquivos = navigator.canShare && navigator.canShare({ files: [arquivo] });
+            debugLog(`🔵 Pode compartilhar arquivos? ${podeCompartilharArquivos}`);
+            
             try {
-                await navigator.share({
-                    files: [arquivo],
-                    title: 'Panfleto de Palestra',
-                    text: `Palestra com ${palestrante}`
-                });
+                if (podeCompartilharArquivos) {
+                    debugLog('🔵 Tentando compartilhar com arquivo...');
+                    // Compartilhar com arquivo
+                    await navigator.share({
+                        files: [arquivo],
+                        title: 'Panfleto de Palestra',
+                        text: `Palestra com ${palestrante}`
+                    });
+                    debugLog('✅ Compartilhamento bem-sucedido!');
+                } else {
+                    debugLog('⚠️ Compartilhamento de arquivos não suportado');
+                    debugLog('🔵 Usando fallback: download direto');
+                    baixarNormalmente(canvas, palestrante, btn, textoOriginal);
+                    return;
+                }
                 
                 // Feedback visual de sucesso
                 btn.textContent = '✅ COMPARTILHADO!';
@@ -200,28 +310,41 @@ function baixarImagem(event) {
                 }, 2000);
                 
             } catch (erro) {
+                debugLog(`❌ Erro no share: ${erro.name} - ${erro.message}`);
+                
                 // Se cancelar o compartilhamento
                 if (erro.name === 'AbortError') {
+                    debugLog('⚠️ Usuário cancelou o compartilhamento');
                     btn.textContent = textoOriginal;
                     btn.disabled = false;
                 } else {
-                    console.log('Erro ao compartilhar:', erro);
-                    // Fallback: baixar normalmente
+                    debugLog('🔵 Usando fallback: download');
                     baixarNormalmente(canvas, palestrante, btn, textoOriginal);
                 }
             }
         } else {
-            // Navegador não suporta compartilhamento - baixa normalmente
+            debugLog('⚠️ navigator.share não disponível');
+            debugLog('🔵 Usando fallback: download');
             baixarNormalmente(canvas, palestrante, btn, textoOriginal);
         }
     }, 'image/png');
+    
+    } catch (erro) {
+        debugLog(`❌ ERRO CRÍTICO NA FUNÇÃO: ${erro.message}`);
+        debugLog(`Stack: ${erro.stack}`);
+        alert('ERRO: ' + erro.message);
+    }
 }
 
 function baixarNormalmente(canvas, palestrante, btn, textoOriginal) {
+    debugLog('🔵 Iniciando download normal...');
+    
     const link = document.createElement('a');
     link.download = `panfleto-${palestrante.replace(/\s+/g, '-')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+    
+    debugLog('✅ Download iniciado');
     
     // Feedback visual
     btn.textContent = '✅ SALVO!';
@@ -234,24 +357,3 @@ function baixarNormalmente(canvas, palestrante, btn, textoOriginal) {
     }, 3000);
 }
 
-function baixarImagem() {
-    const canvas = document.getElementById('canvas');
-    const palestrante = document.getElementById('palestrante').value.trim();
-    
-    // Converter canvas para imagem
-    const link = document.createElement('a');
-    link.download = `panfleto-${palestrante.replace(/\s+/g, '-')}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    
-    // Feedback visual
-    const btn = event.target;
-    const textoOriginal = btn.textContent;
-    btn.textContent = '✅ Baixado!';
-    btn.style.background = '#059669';
-    
-    setTimeout(() => {
-        btn.textContent = textoOriginal;
-        btn.style.background = '#10b981';
-    }, 2000);
-}
