@@ -1,0 +1,194 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* Remove highlight azul no touch */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 15px;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.95);
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.form-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    margin-bottom: 25px;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+input {
+    width: 100%;
+    padding: 18px;
+    border: 3px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+}
+
+.btn-gerar {
+    width: 100%;
+    padding: 22px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+}
+
+.btn-gerar:active {
+    transform: scale(0.98);
+    box-shadow: 0 3px 15px rgba(102, 126, 234, 0.4);
+}
+
+.preview-area {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    display: none;
+}
+
+.preview-area.show {
+    display: block;
+}
+
+.preview-area h3 {
+    color: #10b981;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+#canvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    margin-bottom: 20px;
+}
+
+.btn-download {
+    width: 100%;
+    padding: 20px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.btn-download:active {
+    transform: scale(0.98);
+    background: #059669;
+}
+
+.dica {
+    margin-top: 15px;
+    color: #666;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Otimizações para celular */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .form-card, .preview-area {
+        padding: 20px;
+    }
+    
+    label {
+        font-size: 1.15rem;
+    }
+    
+    input {
+        padding: 20px;
+        font-size: 1.2rem;
+        border-width: 3px;
+    }
+    
+    .btn-gerar {
+        padding: 24px;
+        font-size: 1.35rem;
+    }
+    
+    .btn-download {
+        padding: 22px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Acessibilidade - aumenta área de toque */
+@media (hover: none) and (pointer: coarse) {
+    button {
+        min-height: 60px;
+    }
+    
+    input {
+        min-height: 60px;
+    }
+}

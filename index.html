@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Criar Panfleto de Palestra</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📢 Criar Panfleto</h1>
+        <p class="subtitle">Preencha os campos abaixo:</p>
+        
+        <div class="form-card">
+            <div class="input-group">
+                <label for="palestrante">👤 Nome do Palestrante</label>
+                <input 
+                    type="text" 
+                    id="palestrante" 
+                    placeholder="Digite o nome"
+                    autocomplete="off"
+                >
+            </div>
+            
+            <div class="input-group">
+                <label for="data">📅 Data da Palestra</label>
+                <input 
+                    type="text" 
+                    id="data" 
+                    placeholder="Ex: 27/10/2025"
+                    autocomplete="off"
+                >
+            </div>
+            
+            <div class="input-group">
+                <label for="horario">🕐 Horário da Palestra</label>
+                <input 
+                    type="text" 
+                    id="horario" 
+                    placeholder="Ex: 19h30"
+                    autocomplete="off"
+                >
+            </div>
+            
+            <button onclick="gerarPanfleto()" class="btn-gerar">
+                ✨ CRIAR PANFLETO
+            </button>
+        </div>
+        
+        <div id="preview-area" class="preview-area">
+            <h3>✅ Seu Panfleto:</h3>
+            <canvas id="canvas" width="1080" height="1080"></canvas>
+            <button onclick="baixarImagem(event)" class="btn-download">
+                📤 COMPARTILHAR
+            </button>
+            <p class="dica">Clique para compartilhar direto no WhatsApp!</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
