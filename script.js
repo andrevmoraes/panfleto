@@ -517,8 +517,7 @@ function baixarImagem(event) {
                     debugLog('🔵 Tentando compartilhar com arquivo...');
                     // Compartilhar com arquivo
                     await navigator.share({
-                        files: [arquivo],
-                        title: 'Panfleto de Palestra'
+                        files: [arquivo]
                     });
                     debugLog('✅ Compartilhamento bem-sucedido!');
                 } else {
