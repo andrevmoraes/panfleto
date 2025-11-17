@@ -25,9 +25,8 @@
             <div class="input-group">
                 <label for="data">📅 Data da Palestra</label>
                 <input 
-                    type="text" 
+                    type="date" 
                     id="data" 
-                    placeholder="Ex: 27/10/2025"
                     autocomplete="off"
                 >
             </div>
@@ -35,9 +34,9 @@
             <div class="input-group">
                 <label for="horario">🕐 Horário da Palestra</label>
                 <input 
-                    type="text" 
+                    type="time" 
                     id="horario" 
-                    placeholder="Ex: 19h30"
+                    value="19:30"
                     autocomplete="off"
                 >
             </div>
@@ -57,17 +56,17 @@
         </div>
         
         <!-- Botão debug discreto fora do card -->
-        <p onclick="toggleDebug()" style="text-align: center; margin-top: 15px; color: rgba(255,255,255,0.4); font-size: 11px; cursor: pointer; user-select: none;">
+        <p class="debug-toggle" onclick="toggleDebug()">
             MODO DESENVOLVEDOR
         </p>
         
         <!-- Área de debug (oculta por padrão) -->
-        <div id="debug-area" style="display: none; margin-top: 15px; padding: 15px; background: white; border-radius: 15px; text-align: left; font-size: 12px; font-family: monospace; max-height: 300px; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.15);">
-            <strong style="display: block; margin-bottom: 10px; color: #333;">📋 Log de Debug:</strong>
+        <div id="debug-area" class="debug-area">
+            <strong>📋 Log de Debug:</strong>
             <div id="debug-log"></div>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
 </body>
 </html>

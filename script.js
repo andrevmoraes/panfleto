@@ -10,9 +10,9 @@ function debugLog(mensagem) {
             console.error('Elementos de debug não encontrados!');
             return;
         }
-        
+
         // Mostrar automaticamente quando houver logs
-        debugArea.style.display = 'block';
+        debugArea.classList.add('show');
         const timestamp = new Date().toLocaleTimeString();
         const newLog = `<div style="margin-bottom: 5px; color: #333;">[${timestamp}] ${mensagem}</div>`;
         debugLogDiv.innerHTML += newLog;
@@ -27,16 +27,74 @@ function debugLog(mensagem) {
 // Teste inicial ao carregar a página (sem log automático)
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🟢 Página carregada - Sistema de debug ativo');
+
+    const campoData = document.getElementById('data');
+    if (campoData) {
+        campoData.type = 'date';
+        const hoje = new Date();
+        const diaSemana = hoje.getDay(); // 0 domingo .. 6 sábado
+        const diasAteSegunda = ((8 - diaSemana) % 7) || 7;
+        const proximaSegunda = new Date(hoje);
+        proximaSegunda.setDate(hoje.getDate() + diasAteSegunda);
+
+        const ano = proximaSegunda.getFullYear();
+        const mes = String(proximaSegunda.getMonth() + 1).padStart(2, '0');
+        const dia = String(proximaSegunda.getDate()).padStart(2, '0');
+        campoData.value = `${ano}-${mes}-${dia}`;
+    }
 });
 
 // Função para mostrar/ocultar debug
 function toggleDebug() {
     const debugArea = document.getElementById('debug-area');
-    if (debugArea.style.display === 'none') {
-        debugArea.style.display = 'block';
-    } else {
-        debugArea.style.display = 'none';
+    if (!debugArea) {
+        return;
     }
+    debugArea.classList.toggle('show');
+}
+
+function formatarHorarioParaPanfleto(valor) {
+    if (!valor) {
+        return '';
+    }
+
+    const normalizado = valor.trim();
+
+    if (normalizado.includes('h') || normalizado.includes('H')) {
+        return normalizado.replace('H', 'h');
+    }
+
+    const partes = normalizado.split(':');
+    if (partes.length >= 2) {
+        const [hora, minuto] = partes;
+        if (hora !== '' && minuto !== '') {
+            return `${hora}h${minuto}`;
+        }
+    }
+
+    return normalizado;
+}
+
+function formatarDataParaPanfleto(valor) {
+    if (!valor) {
+        return '';
+    }
+
+    const normalizado = valor.trim();
+
+    if (/\d{2}\/\d{2}\/\d{4}/.test(normalizado)) {
+        return normalizado;
+    }
+
+    const partes = normalizado.split('-');
+    if (partes.length === 3) {
+        const [ano, mes, dia] = partes;
+        if (ano && mes && dia) {
+            return `${dia}/${mes}/${ano}`;
+        }
+    }
+
+    return normalizado;
 }
 
 // Wrapper para chamar a função com log
@@ -56,11 +114,13 @@ function baixarImagemWrapper(event) {
 function gerarPanfleto() {
     // Pegar valores dos inputs
     const palestrante = document.getElementById('palestrante').value.trim();
-    const data = document.getElementById('data').value.trim();
-    const horario = document.getElementById('horario').value.trim();
+    const dataRaw = document.getElementById('data').value.trim();
+    const dataTexto = formatarDataParaPanfleto(dataRaw);
+    const horarioValor = document.getElementById('horario').value.trim();
+    const horarioTexto = formatarHorarioParaPanfleto(horarioValor);
     
     // Validação com mensagem mais clara
-    if (!palestrante || !data || !horario) {
+    if (!palestrante || !dataRaw || !horarioValor) {
         alert('⚠️ Por favor, preencha TODOS os campos antes de continuar!');
         return;
     }
@@ -77,17 +137,35 @@ function gerarPanfleto() {
     // Limpar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    let fundoDisponivel = false;
+    let logoDisponivel = false;
+
     // Função para desenhar todo o conteúdo
     function desenharConteudo(logoImg) {
-        // ==== LOGO (com sombra igual aos textos) ====
+    const associacaoTexto = 'ASSOCIAÇÃO ESPÍRITA JESUS E CARIDADE';
+    const tituloPrincipal = 'Juca de Andrade';
+    let cabecalhoBottom = 0;
+
+        const maxLinhaLargura = canvas.width - 220;
+        function definirFonte(baseSize, weight, texto) {
+            let tamanho = baseSize;
+            ctx.font = `${weight} ${tamanho}px Arial, sans-serif`;
+            while (ctx.measureText(texto).width > maxLinhaLargura && tamanho > baseSize * 0.7) {
+                tamanho -= 2;
+                ctx.font = `${weight} ${tamanho}px Arial, sans-serif`;
+            }
+            return `${weight} ${tamanho}px Arial, sans-serif`;
+        }
+
+        // ==== LOGO + TITULO SUPERIOR ====
+        const margemTopo = 35;
+
         if (logoImg && logoImg.complete) {
-            // Calcular dimensões mantendo proporção
-            const maxWidth = 450;
-            const maxHeight = 300;
+            const maxWidth = 260;
+            const maxHeight = 220;
             let width = logoImg.width;
             let height = logoImg.height;
-            
-            // Redimensionar mantendo proporção
+
             if (width > maxWidth) {
                 height = (maxWidth / width) * height;
                 width = maxWidth;
@@ -96,50 +174,152 @@ function gerarPanfleto() {
                 width = (maxHeight / height) * width;
                 height = maxHeight;
             }
-            
-            // Centralizar horizontalmente
-            const x = (canvas.width - width) / 2;
-            const y = 30;
-            
-            // Aplicar a mesma sombra dos textos
+
+            const logoX = 110;
+            const logoY = margemTopo;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.drawImage(logoImg, logoX, logoY, width, height);
+            ctx.restore();
+
+            const textX = logoX + width + 60;
+            const maxTextWidth = canvas.width - textX - 120;
+
+            ctx.save();
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
             ctx.shadowBlur = 10;
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
-            
-            // Desenhar a logo com sombra
-            ctx.drawImage(logoImg, x, y, width, height);
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            let assocFontSize = 34;
+            ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            while (ctx.measureText(associacaoTexto).width > maxTextWidth && assocFontSize > 24) {
+                assocFontSize -= 1;
+                ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            }
+
+            let tituloFontSize = 70;
+            ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            while (ctx.measureText(tituloPrincipal).width > maxTextWidth && tituloFontSize > 50) {
+                tituloFontSize -= 1;
+                ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            }
+
+            const linhaEspacamento = 14;
+            const totalTextHeight = assocFontSize + linhaEspacamento + tituloFontSize;
+            let textoTop = logoY + (height - totalTextHeight) / 2;
+            if (textoTop < logoY) {
+                textoTop = logoY;
+            }
+            const maxTop = logoY + height - totalTextHeight;
+            if (textoTop > maxTop) {
+                textoTop = maxTop;
+            }
+
+            ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            ctx.fillText(associacaoTexto, textX, textoTop);
+            ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            ctx.fillText(tituloPrincipal, textX, textoTop + assocFontSize + linhaEspacamento);
+            ctx.restore();
+
+            const textoBottom = textoTop + assocFontSize + linhaEspacamento + tituloFontSize;
+            cabecalhoBottom = Math.max(logoY + height, textoBottom);
+        } else {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            let assocFontSize = 44;
+            ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            const maxAssocWidth = canvas.width - 220;
+            while (ctx.measureText(associacaoTexto).width > maxAssocWidth && assocFontSize > 26) {
+                assocFontSize -= 1;
+                ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            }
+
+            let tituloFontSize = 76;
+            ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            while (ctx.measureText(tituloPrincipal).width > maxAssocWidth && tituloFontSize > 52) {
+                tituloFontSize -= 1;
+                ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            }
+
+            const headerTop = margemTopo + 20;
+            const lineSpacing = 18;
+            ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            ctx.fillText(associacaoTexto, canvas.width / 2, headerTop);
+            ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            const tituloY = headerTop + assocFontSize + lineSpacing;
+            ctx.fillText(tituloPrincipal, canvas.width / 2, tituloY);
+            ctx.restore();
+
+            cabecalhoBottom = tituloY + tituloFontSize;
         }
-        
-        // Manter sombra padrão para textos (já está configurada)
+
+        // Configurar sombra padrão para textos do corpo
         ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetX = 2;
         ctx.shadowOffsetY = 2;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
         
         // ==== ÁREA CENTRAL - CONTEÚDO PRINCIPAL ====
-        
-        // Título PALESTRA
+        const footerHeight = 180;
+        const footerTop = canvas.height - footerHeight;
+
+    const contentDesejadoTopo = Math.max(cabecalhoBottom + 110, 360);
+        const contentBottomLimite = footerTop - 80;
+
+        const espacamentoMinimoTotal = 260; // mínimo desejado entre topo e base do bloco central
+        let contentTopo = Math.max(contentDesejadoTopo, cabecalhoBottom + 40);
+        let conteudoAltura = Math.max(contentBottomLimite - contentTopo, espacamentoMinimoTotal);
+
+        const excesso = contentTopo + conteudoAltura - contentBottomLimite;
+        if (excesso > 0) {
+            contentTopo = Math.max(contentTopo - excesso, cabecalhoBottom + 40);
+            conteudoAltura = contentBottomLimite - contentTopo;
+        }
+
+        if (conteudoAltura < espacamentoMinimoTotal) {
+            conteudoAltura = Math.max(contentBottomLimite - Math.max(contentTopo, cabecalhoBottom + 40), 0);
+        }
+
+        conteudoAltura = Math.max(conteudoAltura, 0);
+        const step = conteudoAltura > 0 ? conteudoAltura / 3 : 0; // três espaços entre quatro linhas
+
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 100px Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('PALESTRA', canvas.width / 2, 380);
-        
-        // Nome do palestrante (sem itálico, com sombra)
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 75px Arial, sans-serif';
-        ctx.fillText(palestrante.toUpperCase(), canvas.width / 2, 530);
-        
-        // ==== DATA E HORÁRIO ====
-        
-        // Data
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 90px Arial, sans-serif';
-        ctx.fillText(data, canvas.width / 2, 690);
-        
-        // Horário
-        ctx.font = 'bold 85px Arial, sans-serif';
-        ctx.fillText(horario, canvas.width / 2, 800);
+
+    const palestranteTexto = palestrante.toUpperCase();
+
+    ctx.font = definirFonte(96, 'bold', 'PALESTRA');
+        const palestraY = contentTopo;
+        ctx.fillText('PALESTRA', canvas.width / 2, palestraY);
+
+    ctx.font = definirFonte(78, 'bold', palestranteTexto);
+        const palestranteY = palestraY + step;
+    ctx.fillText(palestranteTexto, canvas.width / 2, palestranteY);
+
+    ctx.font = definirFonte(88, 'bold', dataTexto);
+        const dataY = palestranteY + step;
+    ctx.fillText(dataTexto, canvas.width / 2, dataY);
+
+    ctx.font = definirFonte(74, 'bold', horarioTexto);
+        const horarioY = dataY + step;
+    ctx.fillText(horarioTexto, canvas.width / 2, horarioY);
         
         // ==== RODAPÉ - ENDEREÇO ====
         
@@ -149,8 +329,8 @@ function gerarPanfleto() {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 900, canvas.width, 180);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+    ctx.fillRect(0, footerTop, canvas.width, footerHeight);
         
         // Reativar sombra para o texto do rodapé
         ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
@@ -161,8 +341,10 @@ function gerarPanfleto() {
         ctx.fillStyle = 'white';
         ctx.font = 'bold 42px Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('RUA 13 DE MAIO, Nº140 - CENTRO', canvas.width / 2, 980);
-        ctx.fillText('MOGI MIRIM / SP', canvas.width / 2, 1040);
+    const linhaFooter1 = footerTop + 80;
+    const linhaFooter2 = footerTop + 138;
+    ctx.fillText('RUA 13 DE MAIO, Nº140 - CENTRO', canvas.width / 2, linhaFooter1);
+    ctx.fillText('MOGI MIRIM / SP', canvas.width / 2, linhaFooter2);
         
         // Resetar sombra no final
         ctx.shadowColor = 'transparent';
@@ -171,44 +353,57 @@ function gerarPanfleto() {
         ctx.shadowOffsetY = 0;
     }
     
+    function desenharFundo() {
+        if (fundoDisponivel) {
+            ctx.drawImage(fundoImg, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#5dbeeb');
+            gradient.addColorStop(0.5, '#3a9ec7');
+            gradient.addColorStop(1, '#2876a3');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        desenharFundo();
+        desenharConteudo(logoDisponivel ? logo : null);
+    }
+
     // ==== DESIGN DO PANFLETO ====
-    
-    // Carregar imagem de fundo
+
     const fundoImg = new Image();
-    fundoImg.src = 'fundo.jpg'; // ou 'fundo.png' - coloque na pasta do projeto
-    
-    // Carregar a logo
     const logo = new Image();
-    logo.src = 'logo.png';
-    
-    fundoImg.onerror = function() {
-        // Se não tiver imagem, usa gradiente
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#5dbeeb');
-        gradient.addColorStop(0.5, '#3a9ec7');
-        gradient.addColorStop(1, '#2876a3');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Camada fosca/overlay
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Desenhar conteúdo
-        desenharConteudo(logo);
-    };
-    
+
     fundoImg.onload = function() {
-        // Desenhar imagem de fundo cobrindo todo o canvas
-        ctx.drawImage(fundoImg, 0, 0, canvas.width, canvas.height);
-        
-        // Overlay semi-transparente para suavizar e melhorar legibilidade do texto
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Desenhar conteúdo por cima do fundo
-        desenharConteudo(logo);
+        fundoDisponivel = true;
+        render();
     };
+    fundoImg.onerror = function() {
+        fundoDisponivel = false;
+        render();
+    };
+
+    logo.onload = function() {
+        logoDisponivel = true;
+        render();
+    };
+    logo.onerror = function() {
+        logoDisponivel = false;
+        render();
+    };
+
+    fundoImg.src = 'fundo.jpg';
+    logo.src = 'logo.png';
+
+    render();
     
     // Scroll suave até a preview com pequeno delay para iOS
     setTimeout(() => {
@@ -253,9 +448,9 @@ function baixarImagem(event) {
         btn.disabled = true;
         
         debugLog('🔵 Convertendo canvas para blob...');
-    
-    // Converter canvas para blob
-    canvas.toBlob(async (blob) => {
+
+        // Converter canvas para blob
+        canvas.toBlob(async (blob) => {
         if (!blob) {
             debugLog('❌ ERRO: Falha ao criar blob');
             btn.textContent = '❌ ERRO';
