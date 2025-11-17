@@ -483,8 +483,7 @@ function baixarImagem(event) {
                     // Compartilhar com arquivo
                     await navigator.share({
                         files: [arquivo],
-                        title: 'Panfleto de Palestra',
-                        text: `Palestra com ${palestrante}`
+                        title: 'Panfleto de Palestra'
                     });
                     debugLog('✅ Compartilhamento bem-sucedido!');
                 } else {
