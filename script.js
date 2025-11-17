@@ -24,23 +24,40 @@ function debugLog(mensagem) {
     }
 }
 
+// Função auxiliar para calcular próxima segunda-feira
+function calcularProximaSegunda() {
+    const hoje = new Date();
+    const diaSemana = hoje.getDay(); // 0 domingo .. 6 sábado
+    const diasAteSegunda = ((8 - diaSemana) % 7) || 7;
+    const proximaSegunda = new Date(hoje);
+    proximaSegunda.setDate(hoje.getDate() + diasAteSegunda);
+
+    const ano = proximaSegunda.getFullYear();
+    const mes = String(proximaSegunda.getMonth() + 1).padStart(2, '0');
+    const dia = String(proximaSegunda.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
 // Teste inicial ao carregar a página (sem log automático)
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🟢 Página carregada - Sistema de debug ativo');
 
     const campoData = document.getElementById('data');
     if (campoData) {
-        campoData.type = 'date';
-        const hoje = new Date();
-        const diaSemana = hoje.getDay(); // 0 domingo .. 6 sábado
-        const diasAteSegunda = ((8 - diaSemana) % 7) || 7;
-        const proximaSegunda = new Date(hoje);
-        proximaSegunda.setDate(hoje.getDate() + diasAteSegunda);
-
-        const ano = proximaSegunda.getFullYear();
-        const mes = String(proximaSegunda.getMonth() + 1).padStart(2, '0');
-        const dia = String(proximaSegunda.getDate()).padStart(2, '0');
-        campoData.value = `${ano}-${mes}-${dia}`;
+        campoData.value = calcularProximaSegunda();
+        
+        // Observar mudanças no campo de data para repor valor se ficar vazio
+        campoData.addEventListener('change', function() {
+            if (!this.value) {
+                this.value = calcularProximaSegunda();
+            }
+        });
+        
+        campoData.addEventListener('blur', function() {
+            if (!this.value) {
+                this.value = calcularProximaSegunda();
+            }
+        });
     }
 });
 
@@ -142,9 +159,9 @@ function gerarPanfleto() {
 
     // Função para desenhar todo o conteúdo
     function desenharConteudo(logoImg) {
-    const associacaoTexto = 'ASSOCIAÇÃO ESPÍRITA JESUS E CARIDADE';
-    const tituloPrincipal = 'Juca de Andrade';
-    let cabecalhoBottom = 0;
+        const associacaoTexto = 'ASSOCIAÇÃO ESPÍRITA JESUS E CARIDADE';
+        const tituloPrincipal = 'Juca de Andrade';
+        let cabecalhoBottom = 0;
 
         const maxLinhaLargura = canvas.width - 220;
         function definirFonte(baseSize, weight, texto) {
@@ -158,7 +175,7 @@ function gerarPanfleto() {
         }
 
         // ==== LOGO + TITULO SUPERIOR ====
-        const margemTopo = 35;
+    const margemTopo = 30;
 
         if (logoImg && logoImg.complete) {
             const maxWidth = 260;
@@ -190,11 +207,6 @@ function gerarPanfleto() {
             const maxTextWidth = canvas.width - textX - 120;
 
             ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            ctx.fillStyle = 'white';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
 
@@ -223,9 +235,22 @@ function gerarPanfleto() {
                 textoTop = maxTop;
             }
 
+            // Texto associação com sombra mais forte
             ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+            ctx.fillStyle = 'white';
             ctx.fillText(associacaoTexto, textX, textoTop);
+            
+            // Título principal com sombra padrão
             ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = 'white';
             ctx.fillText(tituloPrincipal, textX, textoTop + assocFontSize + linhaEspacamento);
             ctx.restore();
 
@@ -233,11 +258,6 @@ function gerarPanfleto() {
             cabecalhoBottom = Math.max(logoY + height, textoBottom);
         } else {
             ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
 
@@ -258,9 +278,23 @@ function gerarPanfleto() {
 
             const headerTop = margemTopo + 20;
             const lineSpacing = 18;
+            
+            // Texto associação com sombra mais forte
             ctx.font = `600 ${assocFontSize}px Arial, sans-serif`;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+            ctx.fillStyle = 'white';
             ctx.fillText(associacaoTexto, canvas.width / 2, headerTop);
+            
+            // Título principal com sombra padrão
             ctx.font = `bold ${tituloFontSize}px Arial, sans-serif`;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = 'white';
             const tituloY = headerTop + assocFontSize + lineSpacing;
             ctx.fillText(tituloPrincipal, canvas.width / 2, tituloY);
             ctx.restore();
@@ -280,46 +314,47 @@ function gerarPanfleto() {
         const footerHeight = 180;
         const footerTop = canvas.height - footerHeight;
 
-    const contentDesejadoTopo = Math.max(cabecalhoBottom + 110, 360);
-        const contentBottomLimite = footerTop - 80;
-
-        const espacamentoMinimoTotal = 260; // mínimo desejado entre topo e base do bloco central
-        let contentTopo = Math.max(contentDesejadoTopo, cabecalhoBottom + 40);
-        let conteudoAltura = Math.max(contentBottomLimite - contentTopo, espacamentoMinimoTotal);
-
-        const excesso = contentTopo + conteudoAltura - contentBottomLimite;
-        if (excesso > 0) {
-            contentTopo = Math.max(contentTopo - excesso, cabecalhoBottom + 40);
-            conteudoAltura = contentBottomLimite - contentTopo;
+        const topBound = Math.max(cabecalhoBottom + 80, 340);
+        const bottomBound = footerTop - 70;
+        let blocoAltura = bottomBound - topBound;
+        if (blocoAltura < 320) {
+            blocoAltura = 320;
         }
-
-        if (conteudoAltura < espacamentoMinimoTotal) {
-            conteudoAltura = Math.max(contentBottomLimite - Math.max(contentTopo, cabecalhoBottom + 40), 0);
+        let blocoRealTop = topBound;
+        let blocoRealBottom = blocoRealTop + blocoAltura;
+        if (blocoRealBottom > bottomBound) {
+            blocoRealTop = Math.max(cabecalhoBottom + 50, bottomBound - blocoAltura);
+            blocoRealBottom = blocoRealTop + blocoAltura;
         }
-
-        conteudoAltura = Math.max(conteudoAltura, 0);
-        const step = conteudoAltura > 0 ? conteudoAltura / 3 : 0; // três espaços entre quatro linhas
 
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
 
-    const palestranteTexto = palestrante.toUpperCase();
+        const palestranteTexto = palestrante.toUpperCase();
+    const posicoesRelativas = [0.08, 0.44, 0.78, 0.99];
 
-    ctx.font = definirFonte(96, 'bold', 'PALESTRA');
-        const palestraY = contentTopo;
+        const calcularY = (indice) => {
+            if (blocoAltura <= 0) {
+                return topBound + indice * 90;
+            }
+            return blocoRealTop + blocoAltura * posicoesRelativas[indice];
+        };
+
+        ctx.font = definirFonte(102, 'bold', 'PALESTRA');
+        const palestraY = calcularY(0);
         ctx.fillText('PALESTRA', canvas.width / 2, palestraY);
 
-    ctx.font = definirFonte(78, 'bold', palestranteTexto);
-        const palestranteY = palestraY + step;
-    ctx.fillText(palestranteTexto, canvas.width / 2, palestranteY);
+        ctx.font = definirFonte(84, 'bold', palestranteTexto);
+        const palestranteY = calcularY(1);
+        ctx.fillText(palestranteTexto, canvas.width / 2, palestranteY);
 
-    ctx.font = definirFonte(88, 'bold', dataTexto);
-        const dataY = palestranteY + step;
-    ctx.fillText(dataTexto, canvas.width / 2, dataY);
+        ctx.font = definirFonte(92, 'bold', dataTexto);
+        const dataY = calcularY(2);
+        ctx.fillText(dataTexto, canvas.width / 2, dataY);
 
-    ctx.font = definirFonte(74, 'bold', horarioTexto);
-        const horarioY = dataY + step;
-    ctx.fillText(horarioTexto, canvas.width / 2, horarioY);
+        ctx.font = definirFonte(82, 'bold', horarioTexto);
+        const horarioY = calcularY(3);
+        ctx.fillText(horarioTexto, canvas.width / 2, horarioY);
         
         // ==== RODAPÉ - ENDEREÇO ====
         
@@ -329,8 +364,8 @@ function gerarPanfleto() {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
-    ctx.fillRect(0, footerTop, canvas.width, footerHeight);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+        ctx.fillRect(0, footerTop, canvas.width, footerHeight);
         
         // Reativar sombra para o texto do rodapé
         ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
@@ -341,10 +376,10 @@ function gerarPanfleto() {
         ctx.fillStyle = 'white';
         ctx.font = 'bold 42px Arial, sans-serif';
         ctx.textAlign = 'center';
-    const linhaFooter1 = footerTop + 80;
-    const linhaFooter2 = footerTop + 138;
-    ctx.fillText('RUA 13 DE MAIO, Nº140 - CENTRO', canvas.width / 2, linhaFooter1);
-    ctx.fillText('MOGI MIRIM / SP', canvas.width / 2, linhaFooter2);
+        const linhaFooter1 = footerTop + 80;
+        const linhaFooter2 = footerTop + 138;
+        ctx.fillText('RUA 13 DE MAIO, Nº140 - CENTRO', canvas.width / 2, linhaFooter1);
+        ctx.fillText('MOGI MIRIM / SP', canvas.width / 2, linhaFooter2);
         
         // Resetar sombra no final
         ctx.shadowColor = 'transparent';

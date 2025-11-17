@@ -62,6 +62,20 @@ input {
     font-size: 1.15rem;
     transition: all 0.3s ease;
     font-weight: 500;
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+input[type="date"],
+input[type="time"] {
+    background-color: white;
+    color: #333;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: block;
 }
 
 input:focus {
