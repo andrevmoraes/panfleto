@@ -13,6 +13,17 @@
         
         <div class="form-card">
             <div class="input-group">
+                <label for="titulo-evento">🎵 Título do Evento</label>
+                <input
+                    type="text"
+                    id="titulo-evento"
+                    value="PALESTRA"
+                    placeholder="Ex: PALESTRA MUSICAL"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="input-group">
                 <label for="palestrante">👤 Nome do Palestrante</label>
                 <input 
                     type="text" 
@@ -20,6 +31,18 @@
                     placeholder="Digite o nome"
                     autocomplete="off"
                 >
+            </div>
+            
+            <div class="input-group">
+                <label for="foto">📷 Foto do palestrante (opcional)</label>
+                <input
+                    type="file"
+                    id="foto"
+                    accept="image/*"
+                >
+                <div class="foto-preview-wrapper">
+                    <img id="preview-foto" alt="Prévia da foto do palestrante" />
+                </div>
             </div>
             
             <div class="input-group">

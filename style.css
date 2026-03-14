@@ -68,6 +68,25 @@ input {
     appearance: none;
 }
 
+input[type="file"] {
+    padding: 14px 12px;
+    font-size: 1rem;
+}
+
+.foto-preview-wrapper {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+}
+
+#preview-foto {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(0, 0, 0, 0.15);
+    display: none;
+}
 input[type="date"],
 input[type="time"] {
     background-color: white;

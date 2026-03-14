@@ -24,6 +24,19 @@ function debugLog(mensagem) {
     }
 }
 
+// Estado da foto de perfil do palestrante
+let perfilDataUrl = null;
+let perfilImg = new Image();
+let perfilDisponivel = false;
+
+perfilImg.onload = function() {
+    perfilDisponivel = true;
+};
+
+perfilImg.onerror = function() {
+    perfilDisponivel = false;
+};
+
 // Função auxiliar para calcular próxima segunda-feira
 function calcularProximaSegunda() {
     const hoje = new Date();
@@ -57,6 +70,47 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!this.value) {
                 this.value = calcularProximaSegunda();
             }
+        });
+    }
+
+    const campoFoto = document.getElementById('foto');
+    const previewFoto = document.getElementById('preview-foto');
+    if (campoFoto) {
+        campoFoto.addEventListener('change', function() {
+            const arquivo = this.files && this.files[0];
+            if (!arquivo) {
+                perfilDataUrl = null;
+                perfilDisponivel = false;
+                perfilImg.src = '';
+                if (previewFoto) {
+                    previewFoto.src = '';
+                    previewFoto.style.display = 'none';
+                }
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                perfilDataUrl = event.target.result;
+                perfilImg.src = perfilDataUrl;
+
+                if (previewFoto) {
+                    previewFoto.src = perfilDataUrl;
+                    previewFoto.style.display = 'block';
+                }
+            };
+
+            reader.onerror = function(err) {
+                debugLog('❌ Erro ao ler imagem: ' + err);
+                perfilDataUrl = null;
+                perfilDisponivel = false;
+                if (previewFoto) {
+                    previewFoto.src = '';
+                    previewFoto.style.display = 'none';
+                }
+            };
+
+            reader.readAsDataURL(arquivo);
         });
     }
 });
@@ -130,6 +184,9 @@ function baixarImagemWrapper(event) {
 
 function gerarPanfleto() {
     // Pegar valores dos inputs
+    const campoTituloEvento = document.getElementById('titulo-evento');
+    const tituloEventoInput = campoTituloEvento ? campoTituloEvento.value.trim() : '';
+    const tituloEvento = (tituloEventoInput || 'PALESTRA').toUpperCase();
     const palestrante = document.getElementById('palestrante').value.trim();
     const dataRaw = document.getElementById('data').value.trim();
     const dataTexto = formatarDataParaPanfleto(dataRaw);
@@ -175,7 +232,7 @@ function gerarPanfleto() {
         }
 
         // ==== LOGO + TITULO SUPERIOR ====
-    const margemTopo = 30;
+        const margemTopo = 30;
 
         if (logoImg && logoImg.complete) {
             const maxWidth = 260;
@@ -314,47 +371,138 @@ function gerarPanfleto() {
         const footerHeight = 180;
         const footerTop = canvas.height - footerHeight;
 
-        const topBound = Math.max(cabecalhoBottom + 80, 340);
-        const bottomBound = footerTop - 70;
-        let blocoAltura = bottomBound - topBound;
-        if (blocoAltura < 320) {
-            blocoAltura = 320;
-        }
-        let blocoRealTop = topBound;
-        let blocoRealBottom = blocoRealTop + blocoAltura;
-        if (blocoRealBottom > bottomBound) {
-            blocoRealTop = Math.max(cabecalhoBottom + 50, bottomBound - blocoAltura);
-            blocoRealBottom = blocoRealTop + blocoAltura;
-        }
+        const topBound = Math.max(cabecalhoBottom + 50, 300);
+        const bottomBound = footerTop - 30;
+        const areaDisponivel = Math.max(0, bottomBound - topBound);
 
         ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-
         const palestranteTexto = palestrante.toUpperCase();
-    const posicoesRelativas = [0.08, 0.44, 0.78, 0.99];
+        // VARIÁVEIS DE ALINHAMENTO
+        let areaTextoX;
+        let larguraMaxTexto;
 
-        const calcularY = (indice) => {
-            if (blocoAltura <= 0) {
-                return topBound + indice * 90;
+        if (perfilDisponivel && perfilImg.complete) {
+            // FOTO A ESQUERDA - REDONDA COM CROP QUADRADO CENTRALIZADO
+            const fotoSize = 420;
+            const fotoX = 70;
+            const margemDireita = 48;
+            const espacoEntreFotoETexto = 56;
+            
+            // Centralizar foto verticalmente na área disponível
+            let fotoY = topBound + Math.max(0, (areaDisponivel - fotoSize) / 2);
+            if (fotoY < topBound) fotoY = topBound;
+            
+            const fotoRaio = fotoSize / 2;
+
+            // Crop quadrado centralizado
+            const imgW = perfilImg.width;
+            const imgH = perfilImg.height;
+            let sx, sy, sw, sh;
+            if (imgW / imgH > 1) {
+                sw = imgH; sh = imgH; sx = (imgW - imgH) / 2; sy = 0;
+            } else {
+                sw = imgW; sh = imgW; sx = 0; sy = (imgH - imgW) / 2;
             }
-            return blocoRealTop + blocoAltura * posicoesRelativas[indice];
-        };
 
-        ctx.font = definirFonte(102, 'bold', 'PALESTRA');
-        const palestraY = calcularY(0);
-        ctx.fillText('PALESTRA', canvas.width / 2, palestraY);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(fotoX + fotoRaio, fotoY + fotoRaio, fotoRaio, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(perfilImg, sx, sy, sw, sh, fotoX, fotoY, fotoSize, fotoSize);
+            ctx.restore();
 
-        ctx.font = definirFonte(84, 'bold', palestranteTexto);
-        const palestranteY = calcularY(1);
-        ctx.fillText(palestranteTexto, canvas.width / 2, palestranteY);
+            ctx.beginPath();
+            ctx.arc(fotoX + fotoRaio, fotoY + fotoRaio, fotoRaio - 2, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
 
-        ctx.font = definirFonte(92, 'bold', dataTexto);
-        const dataY = calcularY(2);
-        ctx.fillText(dataTexto, canvas.width / 2, dataY);
+            ctx.textAlign = 'right';
+            areaTextoX = canvas.width - margemDireita;
+            larguraMaxTexto = Math.max(120, areaTextoX - (fotoX + fotoSize + espacoEntreFotoETexto));
+        } else {
+            ctx.textAlign = 'center';
+            areaTextoX = canvas.width / 2;
+            larguraMaxTexto = canvas.width - 200;
+        }
 
-        ctx.font = definirFonte(82, 'bold', horarioTexto);
-        const horarioY = calcularY(3);
-        ctx.fillText(horarioTexto, canvas.width / 2, horarioY);
+        // === TAMANHOS FIXOS: data e horário (sempre cabem em uma linha) ===
+        const FONTE_DATA    = 74;
+        const FONTE_HORARIO = 65;
+        const alturaDataFixa    = FONTE_DATA    * 1.2;
+        const alturaHorarioFixa = FONTE_HORARIO * 1.2;
+        const GAP = 26;
+
+        // === HELPER: quebrar texto em linhas respeitando larguraMaxTexto ===
+        function quebrarLinhas(texto) {
+            const palavras = texto.split(' ');
+            if (palavras.length <= 1) return [texto];
+            const linhas = [];
+            let linhaAtual = '';
+            for (const palavra of palavras) {
+                const tentativa = linhaAtual ? linhaAtual + ' ' + palavra : palavra;
+                if (ctx.measureText(tentativa).width > larguraMaxTexto && linhaAtual) {
+                    linhas.push(linhaAtual);
+                    linhaAtual = palavra;
+                } else {
+                    linhaAtual = tentativa;
+                }
+            }
+            if (linhaAtual) linhas.push(linhaAtual);
+            return linhas;
+        }
+
+        // === HELPER: bloco dinâmico — reduz fonte até caber em alturaMax ===
+        function calcularBloco(texto, fontBase, fonteMin, alturaMax) {
+            for (let t = fontBase; t >= fonteMin; t -= 2) {
+                ctx.font = `bold ${t}px Arial, sans-serif`;
+                const linhas = quebrarLinhas(texto);
+                const altura = linhas.length * (t * 1.2);
+                if (altura <= alturaMax) return { tamanho: t, linhas, altura };
+            }
+            ctx.font = `bold ${fonteMin}px Arial, sans-serif`;
+            const linhas = quebrarLinhas(texto);
+            return { tamanho: fonteMin, linhas, altura: linhas.length * (fonteMin * 1.2) };
+        }
+
+        // Espaço para data + horário + 3 gaps; restante vai para título + nome (50/50)
+        const espacoFixo     = alturaDataFixa + alturaHorarioFixa + GAP * 3;
+        const espacoDinamico = Math.max(100, areaDisponivel - espacoFixo);
+
+        const blocoTitulo = calcularBloco(tituloEvento,     90, 48, espacoDinamico / 2);
+        const blocoNome   = calcularBloco(palestranteTexto, 84, 48, espacoDinamico / 2);
+
+        // Gap adaptativo com o espaço realmente sobrando
+        const alturaTotal    = blocoTitulo.altura + blocoNome.altura + alturaDataFixa + alturaHorarioFixa;
+        const espacoSobrando = areaDisponivel - alturaTotal;
+        const gapReal = Math.max(10, Math.min(GAP, Math.floor(espacoSobrando / 3)));
+
+        // Centralizar verticalmente na área disponível
+        let yTop = topBound + Math.max(0, (areaDisponivel - (alturaTotal + gapReal * 3)) / 2);
+
+        // Título do evento
+        ctx.font = `bold ${blocoTitulo.tamanho}px Arial, sans-serif`;
+        blocoTitulo.linhas.forEach((linha, i) => {
+            ctx.fillText(linha, areaTextoX, yTop + blocoTitulo.tamanho + i * blocoTitulo.tamanho * 1.2);
+        });
+        yTop += blocoTitulo.altura + gapReal;
+
+        // Nome do palestrante
+        ctx.font = `bold ${blocoNome.tamanho}px Arial, sans-serif`;
+        blocoNome.linhas.forEach((linha, i) => {
+            ctx.fillText(linha, areaTextoX, yTop + blocoNome.tamanho + i * blocoNome.tamanho * 1.2);
+        });
+        yTop += blocoNome.altura + gapReal;
+
+        // Data (tamanho fixo)
+        ctx.font = `bold ${FONTE_DATA}px Arial, sans-serif`;
+        ctx.fillText(dataTexto, areaTextoX, yTop + FONTE_DATA);
+        yTop += alturaDataFixa + gapReal;
+
+        // Horário (tamanho fixo)
+        ctx.font = `bold ${FONTE_HORARIO}px Arial, sans-serif`;
+        ctx.fillText(horarioTexto, areaTextoX, yTop + FONTE_HORARIO);
         
         // ==== RODAPÉ - ENDEREÇO ====
         
